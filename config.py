@@ -9,7 +9,7 @@ CONFIG = {
     'gpu_id': "0",
     'note': 'some_note',
     'model': 'BGCN',
-    'dataset_name': 'NetEase',
+    'dataset_name': 'MovieLens',
     'task': 'tune',
     'eval_task': 'test',
 
@@ -33,9 +33,9 @@ CONFIG = {
     'conti_train': 'model_file_from_simple_sample.pth',
 
     ## other settings
-    'epochs': 40,
-    'early': 20,
-    'log_interval': 20,
+    'epochs': 10,
+    'early': 5,
+    'log_interval': 2,
     'test_interval': 1,
     'retry': 1,
 
