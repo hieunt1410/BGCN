@@ -91,7 +91,7 @@ class Logger(object):
         '''
         self.modelinfo = modelinfo
         self.env = envinfo
-        if self.cnt is 0:
+        if self.cnt == 0:
             self.csv_log.write('hash, {}, {}\n'.format(
                 self.modelinfo.get_csv_title(), self.get_metric_csv_title(metrics)))
         self.cnt += 1
