@@ -34,7 +34,7 @@ CONFIG = {
 
     ## other settings
     'epochs': 40,
-    'early': 50,
+    'early': 20,
     'log_interval': 20,
     'test_interval': 1,
     'retry': 1,
