@@ -42,9 +42,9 @@ def main():
     bundle_train_data, bundle_test_data, item_data, assist_data = \
             dataset.get_dataset(CONFIG['path'], CONFIG['dataset_name'], task=CONFIG['task'])
 
-    train_loader = DataLoader(bundle_train_data, 1, True,
+    train_loader = DataLoader(bundle_train_data, 64, True,
                               num_workers=2, pin_memory=True)
-    test_loader = DataLoader(bundle_test_data, 1, False,
+    test_loader = DataLoader(bundle_test_data, 64, False,
                              num_workers=2, pin_memory=True)
 
     #  pretrain
