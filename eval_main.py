@@ -28,7 +28,7 @@ def main():
     # load data
     bundle_train_data, bundle_test_data, item_data, assist_data = \
         dataset.get_dataset(CONFIG['path'], CONFIG['dataset_name'], task=CONFIG['eval_task'])
-    bundle_test_loader = DataLoader(bundle_test_data, 64, False,
+    bundle_test_loader = DataLoader(bundle_test_data, 512, False,
                              num_workers=2, pin_memory=True)
     test_loader = bundle_test_loader
 
@@ -67,7 +67,7 @@ def main():
             assert model.__class__.__name__ == CONFIG['model']
 
             model.load_state_dict(torch.load(
-                os.path.join(DIR, dd['hash']+"_Recall@20.pth")))
+                os.path.join(DIR, dd['hash']+"_Recall@30.pth")))
 
             # log
             log.update_modelinfo(info, {'lr': dd['lr']}, metrics)

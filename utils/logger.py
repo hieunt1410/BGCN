@@ -26,7 +26,7 @@ class Logger(object):
         group_str = map(lambda x: '-'.join(x), group)
         return ', '.join(group_str)
 
-    def __init__(self, log_path, checkpoint_policy='best', checkpoint_interval=None, checkpoint_target=None):
+    def __init__(self, log_path, checkpoint_policy='always', checkpoint_interval=None, checkpoint_target=None):
         '''
         Args:
         - log_path: the dir of every model's log dir
