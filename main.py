@@ -132,7 +132,7 @@ def main():
                         log.update_log(metrics, model) 
 
                         # check overfitting
-                        if epoch > 10:
+                        if epoch > 5:
                             if check_overfitting(log.metrics_log, TARGET, 1, show=False):
                                 break
                         # early stop
