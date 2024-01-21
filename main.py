@@ -41,7 +41,7 @@ def main():
     #  load data
     # remove tune data
     bundle_train_data, bundle_test_data, item_data, assist_data = \
-            dataset.get_dataset(CONFIG['path'], CONFIG['dataset_name'], task=CONFIG['eval_task'])
+            dataset.get_dataset(CONFIG['path'], CONFIG['dataset_name'], task=CONFIG['task'])
 
     train_loader = DataLoader(bundle_train_data, 2048, True,
                               num_workers=8, pin_memory=True)
@@ -60,7 +60,7 @@ def main():
 
     #  metric
     metrics = [Recall(30), Recall(50), NDCG(30), NDCG(50)]
-    TARGET = 'Recall@20'
+    TARGET = 'Recall@30'
 
     #  loss
     loss_func = loss.BPRLoss('mean')

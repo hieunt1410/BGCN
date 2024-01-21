@@ -39,7 +39,7 @@ def main():
 
     # metric
     metrics = [Recall(30), Recall(50), NDCG(30), NDCG(50)]
-    TARGET = 'Recall@20'
+    TARGET = 'Recall@30'
 
     # log
     log = logger.Logger(os.path.join(
