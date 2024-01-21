@@ -34,7 +34,7 @@ CONFIG = {
 
     ## other settings
     'epochs':1000,
-    'early': 50,
+    'early': 100,
 
     ## test path
     'test':['model_path_from_hard_sample']
