@@ -9,7 +9,6 @@ from time import time
 import os
 
 def train(model, epoch, loader, optim, device, CONFIG, loss_func):
-    log_interval = CONFIG['log_interval']
     model.train()
     start = time()
     for i, data in enumerate(loader):
