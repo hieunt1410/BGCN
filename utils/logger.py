@@ -117,12 +117,12 @@ class Logger(object):
             self.checkpoint_epoch += 1
             if self.checkpoint_epoch % self.checkpoint_interval == 0:
                 model_path = os.path.join(
-                    self.root_path, '{}.pth'.format(self.get_model_Id(self.modelinfo)))
+                    self.root_path, '{}.pt'.format(self.get_model_Id(self.modelinfo)))
                 torch.save(model.state_dict(), model_path)
         elif self.checkpoint_policy == 'best':
             for target in self.checkpoint_target:
                 if self.metrics_log[target][-1] == max(self.metrics_log[target]):
-                    model_path = os.path.join(self.root_path, '{}_{}.pth'.format(
+                    model_path = os.path.join(self.root_path, '{}_{}.pt'.format(
                         self.get_model_Id(self.modelinfo), target))
                     torch.save(model.state_dict(), model_path)
 
