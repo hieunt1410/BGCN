@@ -120,31 +120,31 @@ def main():
                     train_writer.add_scalars('loss/single', {"loss": trainloss}, epoch)
 
                     # test
-                    if epoch % CONFIG['test_interval'] == 0:  
-                        output_metrics = test(model, test_loader, device, CONFIG, metrics)
+                    # if epoch % CONFIG['test_interval'] == 0:
+                    output_metrics = test(model, test_loader, device, CONFIG, metrics)
 
-                        for metric in output_metrics:
-                            test_writer.add_scalars('metric/all', {metric.get_title(): metric.metric}, epoch)
+                    for metric in output_metrics:
+                        test_writer.add_scalars('metric/all', {metric.get_title(): metric.metric}, epoch)
+                        
+                        with open(os.path.join(visual_path, f'{metric.get_title()}.txt'), 'w') as f:
+                            f.write(f"{metric.get_title()},{metric.metric}\n")
                             
-                            with open(os.path.join(visual_path, f'{metric.get_title()}.txt'), 'w') as f:
-                                f.write(f"{metric.get_title()},{metric.metric}\n")
-                                
-                            if metric==output_metrics[0]:
-                                test_writer.add_scalars('metric/single', {metric.get_title(): metric.metric}, epoch)
-                                
+                        if metric==output_metrics[0]:
+                            test_writer.add_scalars('metric/single', {metric.get_title(): metric.metric}, epoch)
+                            
 
-                        # log
-                        log.update_log(metrics, model) 
+                    # log
+                    log.update_log(metrics, model) 
 
-                        # check overfitting
-                        if epoch > 2:
-                            if check_overfitting(log.metrics_log, TARGET, 1, show=False):
-                                break
-                        # early stop
-                        early = early_stop(
-                            log.metrics_log[TARGET], early, threshold=0)
-                        if early <= 0:
+                    # check overfitting
+                    if epoch > 2:
+                        if check_overfitting(log.metrics_log, TARGET, 1, show=False):
                             break
+                    # early stop
+                    early = early_stop(
+                        log.metrics_log[TARGET], early, threshold=0)
+                    if early <= 0:
+                        break
                 train_writer.close()
                 test_writer.close()
 
