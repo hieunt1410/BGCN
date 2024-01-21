@@ -67,7 +67,7 @@ def main():
     #  log
     log = logger.Logger(os.path.join(
         CONFIG['log'], CONFIG['dataset_name'], 
-        f"{CONFIG['model']}_{CONFIG['task']}", ''), 'always', checkpoint_target=TARGET)
+        f"{CONFIG['model']}_{CONFIG['task']}", ''), 'best', checkpoint_target=TARGET)
 
     theta = 0.6
 
@@ -125,8 +125,13 @@ def main():
 
                         for metric in output_metrics:
                             test_writer.add_scalars('metric/all', {metric.get_title(): metric.metric}, epoch)
+                            
+                            with open(os.path.join(visual_path, f'{metric.get_title()}.txt'), 'w') as f:
+                                f.write(f"{metric.get_title()},{metric.metric}\n")
+                                
                             if metric==output_metrics[0]:
                                 test_writer.add_scalars('metric/single', {metric.get_title(): metric.metric}, epoch)
+                                
 
                         # log
                         log.update_log(metrics, model) 
