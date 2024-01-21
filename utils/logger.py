@@ -108,6 +108,10 @@ class Logger(object):
         with open(os.path.join(
                 self.root_path, '{}.json'.format(self.get_model_Id(self.modelinfo))), 'w') as f:
             dump(self._metrics_log, f)
+        
+        for metric in self._metrics_log:
+            print(f"{metric.get_title()}: {self._metrics_log[metric]}")
+            
         # save model
         if self.checkpoint_policy == 'always':
             self.checkpoint_epoch += 1
