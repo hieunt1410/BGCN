@@ -112,25 +112,27 @@ def main():
             try:
                 # train & test
                 early = CONFIG['early']  
-                train_writer = SummaryWriter(log_dir=visual_path, comment='train')
-                test_writer = SummaryWriter(log_dir=visual_path, comment='test') 
+                # train_writer = SummaryWriter(log_dir=visual_path, comment='train')
+                # test_writer = SummaryWriter(log_dir=visual_path, comment='test')
+                writer = SummaryWriter(log_dir=visual_path)
+                 
                 for epoch in range(CONFIG['epochs']):
                     # train
                     trainloss = train(model, epoch+1, train_loader, op, device, CONFIG, loss_func)
-                    train_writer.add_scalars('loss/single', {"loss": trainloss}, epoch)
+                    # train_writer.add_scalars('loss/single', {"loss": trainloss}, epoch)
+                    writer.add_scalars('loss/single', {"loss": trainloss}, epoch)
 
                     # test
                     # if epoch % CONFIG['test_interval'] == 0:
                     output_metrics = test(model, test_loader, device, CONFIG, metrics)
 
                     for metric in output_metrics:
-                        test_writer.add_scalars('metric/all', {metric.get_title(): metric.metric}, epoch)
-                        
-                        with open(os.path.join(visual_path, f'{metric.get_title()}.txt'), 'w') as f:
-                            f.write(f"{metric.get_title()},{metric.metric}\n")
+                        # test_writer.add_scalars('metric/all', {metric.get_title(): metric.metric}, epoch)
+                        writer.add_scalars('metric/all', {metric.get_title(): metric.metric}, epoch)
                             
                         if metric==output_metrics[0]:
-                            test_writer.add_scalars('metric/single', {metric.get_title(): metric.metric}, epoch)
+                            # test_writer.add_scalars('metric/single', {metric.get_title(): metric.metric}, epoch)
+                            writer.add_scalars('metric/single', {metric.get_title(): metric.metric}, epoch)
                             
 
                     # log
