@@ -147,8 +147,9 @@ def main():
                         log.metrics_log[TARGET], early, threshold=0)
                     if early <= 0:
                         break
-                train_writer.close()
-                test_writer.close()
+                # train_writer.close()
+                # test_writer.close()
+                writer.close()
 
                 log.close_log(TARGET)
                 retry = -1

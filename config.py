@@ -37,7 +37,7 @@ CONFIG = {
     'early': 5,
     'log_interval': 2,
     'test_interval': 1,
-    'retry': 2,
+    'retry': 1,
 
     ## test path
     'test':['model_path_from_hard_sample']
