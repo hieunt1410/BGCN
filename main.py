@@ -59,7 +59,7 @@ def main():
     bi_graph = assist_data.ground_truth_b_i
 
     #  metric
-    metrics = [Recall(10), Recall(20), NDCG(10), NDCG(20), Recall(40), NDCG(40), Recall(80), NDCG(80)]
+    metrics = [Recall(30), Recall(50), NDCG(30), NDCG(50)]
     TARGET = 'Recall@20'
 
     #  loss
