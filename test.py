@@ -27,7 +27,6 @@ def test(model, loader, device, CONFIG, metrics):
     print('Test: time={:d}s'.format(int(time()-start)))
     for metric in metrics:
         metric.stop()
-        print('{}:{}'.format(metric.get_title(), metric.metric()), end='\t')
+        print('{}:{}'.format(metric.get_title(), metric.metric), end='\t')
     print('')
     return metrics
-
