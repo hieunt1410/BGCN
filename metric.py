@@ -30,9 +30,9 @@ class _Metric:
     def __init__(self):
         self.start()
 
-    @property
-    def metric(self):
-        return self._metric
+    # @property
+    # def metric(self):
+    #     return self._metric
 
     def __call__(self, scores, ground_truth):
         '''
@@ -63,7 +63,10 @@ class Recall(_Metric):
     '''
     Recall in top-k samples
     '''
-
+    @property
+    def metric(self):
+        return self._metric
+    
     def __init__(self, topk):
         super().__init__()
         self.topk = topk
@@ -78,13 +81,17 @@ class Recall(_Metric):
         num_pos = ground_truth.sum(dim=1)
         self._cnt += scores.shape[0] - (num_pos == 0).sum().item()
         self._sum += (is_hit/(num_pos+self.epison)).sum().item()
-
+        self._metric = self._sum/self._cnt
+        
 class NDCG(_Metric):
     '''
     NDCG in top-k samples
     In this work, NDCG = log(2)/log(1+hit_positions)
     '''
-
+    @property
+    def metric(self):
+        return self._metric
+    
     def DCG(self, hit, device=torch.device('cpu')):
         hit = hit/torch.log2(torch.arange(2, self.topk+2,
                                           device=device, dtype=torch.float))
@@ -115,7 +122,7 @@ class NDCG(_Metric):
         ndcg = dcg/idcg.to(device)
         self._cnt += scores.shape[0] - (num_pos == 0).sum().item()
         self._sum += ndcg.sum().item()
-
+        self._metric = self._sum/self._cnt
 
 class MRR(_Metric):
     '''
@@ -138,3 +145,4 @@ class MRR(_Metric):
         num_pos = ground_truth.sum(dim=1)
         self._cnt += scores.shape[0] - (num_pos == 0).sum().item()
         self._sum += first_hit_rr.sum().item()
+        self._metric = self._sum/self._cnt
