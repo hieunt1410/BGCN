@@ -39,13 +39,14 @@ def main():
     torch.backends.cudnn.deterministic = True
 
     #  load data
+    # remove tune data
     bundle_train_data, bundle_test_data, item_data, assist_data = \
-            dataset.get_dataset(CONFIG['path'], CONFIG['dataset_name'], task=CONFIG['task'])
+            dataset.get_dataset(CONFIG['path'], CONFIG['dataset_name'], task=CONFIG['eval_task'])
 
-    train_loader = DataLoader(bundle_train_data, 512, True,
-                              num_workers=2, pin_memory=True)
-    test_loader = DataLoader(bundle_test_data, 512, False,
-                             num_workers=2, pin_memory=True)
+    train_loader = DataLoader(bundle_train_data, 2048, True,
+                              num_workers=8, pin_memory=True)
+    test_loader = DataLoader(bundle_test_data, 4096, False,
+                             num_workers=16, pin_memory=True)
 
     #  pretrain
     if 'pretrain' in CONFIG:
@@ -58,8 +59,8 @@ def main():
     bi_graph = assist_data.ground_truth_b_i
 
     #  metric
-    metrics = [Recall(30), NDCG(30), Recall(50), NDCG(50), Recall(80), NDCG(80)]
-    TARGET = ['Recall@30', 'NDCG@30', 'Recall@50', 'NDCG@50', 'Recall@80', 'NDCG@80']
+    metrics = [Recall(10), Recall(20), NDCG(10), NDCG(20), Recall(40), NDCG(40), Recall(80), NDCG(80)]
+    TARGET = 'Recall@20'
 
     #  loss
     loss_func = loss.BPRLoss('mean')
@@ -105,56 +106,25 @@ def main():
             model.load_state_dict(torch.load(CONFIG['conti_train']))
             print('load model and continue training')
 
-        retry = CONFIG['retry']  # =1
-        while retry >= 0:
+        log.update_modelinfo(info, env, metrics)
+            # train & test
+        train_writer = SummaryWriter(log_dir=visual_path, comment='train')
+        test_writer = SummaryWriter(log_dir=visual_path, comment='test') 
+        for epoch in range(CONFIG['epochs']):
+            # train
+            trainloss = train(model, epoch+1, train_loader, op, device, CONFIG, loss_func)
+            train_writer.add_scalars('loss/single', {"loss": trainloss}, epoch)
+
+            # test
+            output_metrics = test(model, test_loader, device, CONFIG, metrics)
+
+            for metric in output_metrics:
+                test_writer.add_scalars('metric/all', {metric.get_title(): metric.metric}, epoch)
+                if metric==output_metrics[0]:
+                    test_writer.add_scalars('metric/single', {metric.get_title(): metric.metric}, epoch)
+
             # log
-            log.update_modelinfo(info, env, metrics)
-            try:
-                # train & test
-                early = CONFIG['early']  
-                # train_writer = SummaryWriter(log_dir=visual_path, comment='train')
-                # test_writer = SummaryWriter(log_dir=visual_path, comment='test')
-                writer = SummaryWriter(log_dir=visual_path)
-                 
-                for epoch in range(CONFIG['epochs']):
-                    # train
-                    trainloss = train(model, epoch+1, train_loader, op, device, CONFIG, loss_func)
-                    # train_writer.add_scalars('loss/single', {"loss": trainloss}, epoch)
-                    writer.add_scalars('loss/single', {"loss": trainloss}, epoch)
-
-                    # test
-                    # if epoch % CONFIG['test_interval'] == 0:
-                    output_metrics = test(model, test_loader, device, CONFIG, metrics)
-
-                    for metric in output_metrics:
-                        # test_writer.add_scalars('metric/all', {metric.get_title(): metric.metric}, epoch)
-                        writer.add_scalars('metric/all', {metric.get_title(): metric.metric}, epoch)
-                            
-                        if metric==output_metrics[0]:
-                            # test_writer.add_scalars('metric/single', {metric.get_title(): metric.metric}, epoch)
-                            writer.add_scalars('metric/single', {metric.get_title(): metric.metric}, epoch)
-                            
-
-                    # log
-                    log.update_log(metrics, model) 
-
-                    # check overfitting
-                    if epoch > 2:
-                        if check_overfitting(log.metrics_log, TARGET, 1, show=False):
-                            break
-                    # early stop
-                    early = early_stop(
-                        log.metrics_log[TARGET], early, threshold=0)
-                    if early <= 0:
-                        break
-                # train_writer.close()
-                # test_writer.close()
-                writer.close()
-
-                log.close_log(TARGET)
-                retry = -1
-            except RuntimeError:
-                retry -= 1
+            log.update_log(metrics, model) 
     log.close()
 
 

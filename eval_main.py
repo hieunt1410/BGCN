@@ -28,8 +28,8 @@ def main():
     # load data
     bundle_train_data, bundle_test_data, item_data, assist_data = \
         dataset.get_dataset(CONFIG['path'], CONFIG['dataset_name'], task=CONFIG['eval_task'])
-    bundle_test_loader = DataLoader(bundle_test_data, 512, False,
-                             num_workers=2, pin_memory=True)
+    bundle_test_loader = DataLoader(bundle_test_data, 4096, False,
+                             num_workers=16, pin_memory=True)
     test_loader = bundle_test_loader
 
     #  graph
@@ -38,8 +38,8 @@ def main():
     bi_graph = assist_data.ground_truth_b_i
 
     # metric
-    metrics = [Recall(30), NDCG(30), Recall(50), NDCG(50), Recall(80), NDCG(80)]
-    TARGET = ['Recall@30', 'NDCG@30', 'Recall@50', 'NDCG@50', 'Recall@80', 'NDCG@80']
+    metrics = [Recall(10), Recall(20), NDCG(10), NDCG(20), Recall(40), NDCG(40), Recall(80), NDCG(80)]
+    TARGET = 'Recall@20'
 
     # log
     log = logger.Logger(os.path.join(
@@ -67,7 +67,7 @@ def main():
             assert model.__class__.__name__ == CONFIG['model']
 
             model.load_state_dict(torch.load(
-                os.path.join(DIR, dd['hash']+"_Recall@30.pt")))
+                os.path.join(DIR, dd['hash']+"_Recall@20.pth")))
 
             # log
             log.update_modelinfo(info, {'lr': dd['lr']}, metrics)
