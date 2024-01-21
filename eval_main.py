@@ -67,7 +67,7 @@ def main():
             assert model.__class__.__name__ == CONFIG['model']
 
             model.load_state_dict(torch.load(
-                os.path.join(DIR, dd['hash']+"_Recall@20.pth")))
+                os.path.join(DIR, dd['hash']+"_Recall@30.pth")))
 
             # log
             log.update_modelinfo(info, {'lr': dd['lr']}, metrics)
