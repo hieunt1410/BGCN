@@ -87,10 +87,9 @@ class Jaccard(_Metric):
     def __init__(self):
         super().__init__()
         self.epison = 1e-8
-        self.title = "Jaccard"
         
     def get_title(self):
-        return "{}".format(self.title)
+        return "Jaccard"
 
     def __call__(self, scores, ground_truth):
         is_hit = get_is_hit(scores, ground_truth, scores.shape[1])
