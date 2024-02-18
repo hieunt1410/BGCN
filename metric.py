@@ -96,7 +96,7 @@ class Jaccard(_Metric):
         is_hit = is_hit.sum(dim=1)
         gold_bun = ground_truth.sum(dim=1)
         pred_bun = scores.sum(dim=1)
-        self._cnt += scores.shape[0] - (num_pos == 0).sum().item()
+        self._cnt += scores.shape[0] - (gold_bun == 0).sum().item()
         self._sum += (is_hit/(gold_bun+pred_bun-is_hit)).sum().item()
 
 class NDCG(_Metric):
