@@ -88,7 +88,7 @@ class Jaccard(_Metric):
         super().__init__()
         self.epison = 1e-8
 
-    def get_title(self):
+    def get_title():
         return "Jaccard"
 
     def __call__(self, scores, ground_truth):

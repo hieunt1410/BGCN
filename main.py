@@ -107,7 +107,7 @@ def main():
             print('load model and continue training')
 
         log.update_modelinfo(info, env, metrics)
-            # train & test
+        # train & test
         train_writer = SummaryWriter(log_dir=visual_path, comment='train')
         test_writer = SummaryWriter(log_dir=visual_path, comment='test') 
         for epoch in range(CONFIG['epochs']):
