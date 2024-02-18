@@ -78,6 +78,26 @@ class Recall(_Metric):
         num_pos = ground_truth.sum(dim=1)
         self._cnt += scores.shape[0] - (num_pos == 0).sum().item()
         self._sum += (is_hit/(num_pos+self.epison)).sum().item()
+        
+class Jaccard(_Metric):
+    '''
+    Jaccard in top-k samples
+    '''
+
+    def __init__(self):
+        super().__init__()
+        self.epison = 1e-8
+
+    def get_title(self):
+        return "Jaccard"
+
+    def __call__(self, scores, ground_truth):
+        is_hit = get_is_hit(scores, ground_truth, scores.shape[1])
+        is_hit = is_hit.sum(dim=1)
+        gold_bun = ground_truth.sum(dim=1)
+        pred_bun = scores.sum(dim=1)
+        self._cnt += scores.shape[0] - (num_pos == 0).sum().item()
+        self._sum += (is_hit/(gold_bun+pred_bun-is_hit)).sum().item()
 
 class NDCG(_Metric):
     '''
