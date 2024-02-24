@@ -33,8 +33,8 @@ CONFIG = {
     'conti_train': 'model_file_from_simple_sample.pth',
 
     ## other settings
-    'epochs':100,
-    'early': 10,
+    'epochs':50,
+    'early': 30,
 
     ## test path
     'test':['model_path_from_hard_sample']
