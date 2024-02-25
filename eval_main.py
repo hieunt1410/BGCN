@@ -28,7 +28,7 @@ def main():
     # load data
     bundle_train_data, bundle_test_data, item_data, assist_data = \
         dataset.get_dataset(CONFIG['path'], CONFIG['dataset_name'], task=CONFIG['eval_task'])
-    bundle_test_loader = DataLoader(bundle_test_data, 512, False,
+    bundle_test_loader = DataLoader(bundle_test_data, 32, False,
                              num_workers=16, pin_memory=True)
     test_loader = bundle_test_loader
 
