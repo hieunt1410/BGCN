@@ -22,7 +22,7 @@ CONFIG = {
     ## optimal hyperparameters 
     'lrs': [3e-4],
     'message_dropouts': [0.3],
-    'node_dropouts': [0],
+    'node_dropouts': [0.1],
     'decays': [1e-7],
 
     ## hard negative sample and further train
@@ -33,8 +33,8 @@ CONFIG = {
     'conti_train': 'model_file_from_simple_sample.pth',
 
     ## other settings
-    'epochs':50,
-    'early': 30,
+    'epochs':200,
+    'early': 50,
 
     ## test path
     'test':['model_path_from_hard_sample']
