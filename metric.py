@@ -3,7 +3,7 @@
 
 import torch
 import numpy as np
-from congif import CONFIG
+from config import CONFIG
 
 _is_hit_cache = {}
 
