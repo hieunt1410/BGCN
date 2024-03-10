@@ -69,9 +69,9 @@ class _Metric:
             for line in f.readlines():
                 b, i = line.strip().split()
                 if b not in self.bi:
-                    self.bi[b] = set([i])
+                    self.bi[int(b)] = set([int(i)])
                 else:
-                    self.bi[b].add(i)
+                    self.bi[int(b)].add(int(i))
 
 class Recall(_Metric):
     '''
