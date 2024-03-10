@@ -30,7 +30,6 @@ class _Metric:
 
     def __init__(self):
         self.start()
-        self.load_bi()
 
     @property
     def metric(self):
@@ -55,23 +54,12 @@ class _Metric:
         self._cnt = 0
         self._metric = 0
         self._sum = 0
-        self.bi = {}
 
     def stop(self):
         global _is_hit_cache
         _is_hit_cache = {}
         self._metric = self._sum/self._cnt
         
-    def load_bi(self):
-        path = CONFIG['path']
-        name = CONFIG['dataset_name']
-        with open(os.path.join(path, name, 'bundle_item.txt'), 'r') as f:
-            for line in f.readlines():
-                b, i = line.strip().split()
-                if int(b) not in self.bi:
-                    self.bi[int(b)] = set([int(i)])
-                else:
-                    self.bi[int(b)].add(int(i))
 
 class Recall(_Metric):
     '''
@@ -103,7 +91,19 @@ class Jaccard(_Metric):
         super().__init__()
         self.epison = 1e-8
         self.topk = topk
+        self.bi = {}
         
+    def load_bi(self):
+        path = CONFIG['path']
+        name = CONFIG['dataset_name']
+        with open(os.path.join(path, name, 'bundle_item.txt'), 'r') as f:
+            for line in f.readlines():
+                b, i = line.strip().split()
+                if int(b) not in self.bi:
+                    self.bi[int(b)] = set([int(i)])
+                else:
+                    self.bi[int(b)].add(int(i))
+    
     def get_title(self):
         return "Jaccard@{}".format(self.topk)
     
@@ -127,6 +127,7 @@ class Jaccard(_Metric):
         # num_pos = ground_truth.sum(dim=1)
         # self._cnt += scores.shape[0] - (num_pos == 0).sum().item()
         # self._sum += (is_hit/(2 * self.topk-is_hit)).sum().item()
+        self.load_bi()
         row_id, col_id = torch.topk(scores, self.topk)
         is_hit = get_is_hit(scores, ground_truth, self.topk)
         num_pos = is_hit.sum(dim=1)
