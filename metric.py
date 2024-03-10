@@ -31,7 +31,6 @@ class _Metric:
     def __init__(self):
         self.start()
         self.load_bi()
-        print(self.bi[1900])
 
     @property
     def metric(self):
@@ -141,6 +140,8 @@ class Jaccard(_Metric):
             gold_bun.append(np.where(ground_truth[i].cpu().numpy() == 1)[0])
         
         col_id = col_id.cpu().numpy()
+        print(self.bi[1900])
+        
         for i in range(len(row_id)):
             self._sum += self.cal_overlap(col_id[i], gold_bun[i])
         self._cnt = scores.shape[0] - (num_pos == 0).sum().item()
