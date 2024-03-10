@@ -134,7 +134,7 @@ class Jaccard(_Metric):
         # gold_bun = col_id[row, col]
         gold_bun = []
         for i in range(len(ground_truth)):
-            tmp = [ground_truth[i][j] for j in range(len(ground_truth[i])) if ground_truth[i][j] == 1]
+            tmp = [j for j in range(len(ground_truth[i])) if ground_truth[i][j] == 1]
             gold_bun.append(tmp)
         self._cnt = scores.shape[0] - (num_pos == 0).sum().item()
         for i in range(len(row)):
