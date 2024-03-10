@@ -133,12 +133,15 @@ class Jaccard(_Metric):
         row, col = np.where(is_hit.cpu().numpy() == 1)
         # gold_bun = col_id[row, col]
         gold_bun = []
+        # for i in range(len(col_id)):
+        #     tmp = [col_id[i][j] for j in range(len(col_id[i])) if is_hit[i][j] == 1]
+        #     gold_bun.append(tmp)
         for i in range(len(ground_truth)):
-            tmp = [j for j in range(len(ground_truth[i])) if ground_truth[i][j] == 1]
-            gold_bun.append(tmp)
-        self._cnt = scores.shape[0] - (num_pos == 0).sum().item()
+            gold_bun.append(np.where(ground_truth[i] == 1)[0])
+        
         for i in range(len(row)):
             self._sum += self.cal_overlap(col_id[i], gold_bun[i])
+        self._cnt = scores.shape[0] - (num_pos == 0).sum().item()
         
 class NDCG(_Metric):
     '''
