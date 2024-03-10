@@ -140,7 +140,7 @@ class Jaccard(_Metric):
             gold_bun.append(np.where(ground_truth[i].cpu().numpy() == 1)[0])
         
         col_id = col_id.cpu().numpy()
-        print(self.bi[1900])
+        print(len(self.bi))
         
         for i in range(len(row_id)):
             self._sum += self.cal_overlap(col_id[i], gold_bun[i])
