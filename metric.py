@@ -92,6 +92,7 @@ class Jaccard(_Metric):
         self.epison = 1e-8
         self.topk = topk
         self.bi = {}
+        self.load_bi()
         
     def load_bi(self):
         path = CONFIG['path']
@@ -111,15 +112,16 @@ class Jaccard(_Metric):
         ret = 0
         for i in list_bun1:
             tmp = 0
+            cnt = 0
             if len(list_bun2) == 0:
                 continue
             for j in list_bun2:
                 if i == j:
+                    cnt += 1
                     continue
-                
                 overlap = self.bi[i].intersection(self.bi[j])
                 tmp += len(overlap) / (len(self.bi[i]) + len(self.bi[j]) - len(overlap))
-            tmp /= len(list_bun2)
+            tmp /= (len(list_bun2) - cnt)
             ret += tmp
         ret /= len(list_bun1)
         return ret
@@ -130,7 +132,6 @@ class Jaccard(_Metric):
         # num_pos = ground_truth.sum(dim=1)
         # self._cnt += scores.shape[0] - (num_pos == 0).sum().item()
         # self._sum += (is_hit/(2 * self.topk-is_hit)).sum().item()
-        self.load_bi()
         row_id, col_id = torch.topk(scores, self.topk)
         is_hit = get_is_hit(scores, ground_truth, self.topk)
         num_pos = is_hit.sum(dim=1)
