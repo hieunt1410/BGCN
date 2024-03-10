@@ -31,6 +31,7 @@ class _Metric:
     def __init__(self):
         self.start()
         self.load_bi()
+        print(self.bi[1900])
 
     @property
     def metric(self):
