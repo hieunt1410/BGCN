@@ -68,7 +68,7 @@ class _Metric:
         with open(os.path.join(path, name, 'bundle_item.txt'), 'r') as f:
             for line in f.readlines():
                 b, i = line.strip().split()
-                if b not in self.bi:
+                if int(b) not in self.bi:
                     self.bi[int(b)] = set([int(i)])
                 else:
                     self.bi[int(b)].add(int(i))
