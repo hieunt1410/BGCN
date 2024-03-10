@@ -3,6 +3,7 @@
 
 import torch
 import numpy as np
+from congif import CONFIG
 
 _is_hit_cache = {}
 
@@ -21,7 +22,6 @@ def get_is_hit(scores, ground_truth, topk):
         _is_hit_cache[topk] = {'id': cacheid, 'is_hit': is_hit}
         return is_hit
 
-
 class _Metric:
     '''
     base class of metrics like Recall@k NDCG@k MRR@k
@@ -29,6 +29,7 @@ class _Metric:
 
     def __init__(self):
         self.start()
+        self.load_bi()
 
     @property
     def metric(self):
@@ -53,11 +54,23 @@ class _Metric:
         self._cnt = 0
         self._metric = 0
         self._sum = 0
+        self.bi = {}
 
     def stop(self):
         global _is_hit_cache
         _is_hit_cache = {}
         self._metric = self._sum/self._cnt
+        
+    def load_bi(self):
+        path = CONFIG['path']
+        name = CONFIG['dataset_name']
+        with open(os.path.join(path, name, 'bundle_item.txt'), 'r') as f:
+            for line in f.readlines():
+                b, i = line.strip().split()
+                if b not in self.bi:
+                    self.bi[b] = set([i])
+                else:
+                    self.bi[b].add(i)
 
 class Recall(_Metric):
     '''
@@ -78,12 +91,13 @@ class Recall(_Metric):
         num_pos = ground_truth.sum(dim=1)
         self._cnt += scores.shape[0] - (num_pos == 0).sum().item()
         self._sum += (is_hit/(num_pos+self.epison)).sum().item()
-        
+
+
 class Jaccard(_Metric):
     '''
     Jaccard in top-k samples
     '''
-
+    
     def __init__(self, topk):
         super().__init__()
         self.epison = 1e-8
@@ -91,13 +105,39 @@ class Jaccard(_Metric):
         
     def get_title(self):
         return "Jaccard@{}".format(self.topk)
+    
+    def cal_overlap(self, list_bun1, list_bun2):
+        ret = 0
+        for i in list_bun1:
+            tmp = 0
+            for j in list_bun2:
+                overlap = self.bi[i].intersection(self.bi[j])
+                tmp += overlap / (len(self.bi[i]) + len(self.bi[j]) - overlap)
+            tmp /= len(list_bun2)
+            ret += tmp
+        ret /= len(list_bun1)
+        return ret
 
     def __call__(self, scores, ground_truth):
+        # is_hit = get_is_hit(scores, ground_truth, self.topk)
+        # is_hit = is_hit.sum(dim=1)
+        # num_pos = ground_truth.sum(dim=1)
+        # self._cnt += scores.shape[0] - (num_pos == 0).sum().item()
+        # self._sum += (is_hit/(2 * self.topk-is_hit)).sum().item()
+        row_id, col_id = torch.topk(scores, self.topk)
         is_hit = get_is_hit(scores, ground_truth, self.topk)
-        is_hit = is_hit.sum(dim=1)
         num_pos = ground_truth.sum(dim=1)
-        self._cnt += scores.shape[0] - (num_pos == 0).sum().item()
-        self._sum += (is_hit/(2 * self.topk-is_hit)).sum().item()
+        row, col = np.where(is_hit.cpu().numpy() == 1)
+        # gold_bun = col_id[row, col]
+        gold_bun = []
+        for i in range(len(is_hit)):
+            tmp = [col_id[i][j] for j in range(len(is_hit[i])) if is_hit[i][j] == 1]
+            gold_bun.append(tmp)
+        self._cnt = scores.shape[0] - (num_pos == 0).sum().item()
+        
+        for i in range(len(row)):
+            self._sum += self.cal_overlap(col_id[i], gold_bun[i])
+        
 
 class NDCG(_Metric):
     '''
