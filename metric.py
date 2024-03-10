@@ -114,6 +114,9 @@ class Jaccard(_Metric):
             if len(list_bun2) == 0:
                 continue
             for j in list_bun2:
+                if i == j:
+                    continue
+                
                 overlap = self.bi[i].intersection(self.bi[j])
                 tmp += len(overlap) / (len(self.bi[i]) + len(self.bi[j]) - len(overlap))
             tmp /= len(list_bun2)
@@ -141,7 +144,6 @@ class Jaccard(_Metric):
             gold_bun.append(np.where(ground_truth[i].cpu().numpy() == 1)[0])
         
         col_id = col_id.cpu().numpy()
-        print(len(self.bi))
         
         for i in range(len(row_id)):
             self._sum += self.cal_overlap(col_id[i], gold_bun[i])
