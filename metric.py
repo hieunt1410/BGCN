@@ -115,7 +115,7 @@ class Jaccard(_Metric):
                 continue
             for j in list_bun2:
                 overlap = self.bi[i].intersection(self.bi[j])
-                tmp += overlap / (len(self.bi[i]) + len(self.bi[j]) - overlap)
+                tmp += len(overlap) / (len(self.bi[i]) + len(self.bi[j]) - len(overlap))
             tmp /= len(list_bun2)
             ret += tmp
         ret /= len(list_bun1)
