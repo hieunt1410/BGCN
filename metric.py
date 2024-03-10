@@ -137,7 +137,7 @@ class Jaccard(_Metric):
         #     tmp = [col_id[i][j] for j in range(len(col_id[i])) if is_hit[i][j] == 1]
         #     gold_bun.append(tmp)
         for i in range(len(ground_truth)):
-            gold_bun.append(np.where(ground_truth[i] == 1)[0])
+            gold_bun.append(np.where(ground_truth[i].cpu().numpy() == 1)[0])
         
         for i in range(len(row)):
             self._sum += self.cal_overlap(col_id[i], gold_bun[i])
