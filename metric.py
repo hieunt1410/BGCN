@@ -111,6 +111,8 @@ class Jaccard(_Metric):
         ret = 0
         for i in list_bun1:
             tmp = 0
+            if len(list_bun2) == 0:
+                continue
             for j in list_bun2:
                 overlap = self.bi[i].intersection(self.bi[j])
                 tmp += overlap / (len(self.bi[i]) + len(self.bi[j]) - overlap)
@@ -127,7 +129,7 @@ class Jaccard(_Metric):
         # self._sum += (is_hit/(2 * self.topk-is_hit)).sum().item()
         row_id, col_id = torch.topk(scores, self.topk)
         is_hit = get_is_hit(scores, ground_truth, self.topk)
-        num_pos = ground_truth.sum(dim=1)
+        num_pos = is_hit.sum(dim=1)
         row, col = np.where(is_hit.cpu().numpy() == 1)
         # gold_bun = col_id[row, col]
         gold_bun = []
