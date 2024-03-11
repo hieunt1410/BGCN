@@ -140,7 +140,7 @@ class Jaccard(_Metric):
         for i in range(len(row_id)):
             self._sum += self.cal_overlap(col_id[i], gold_bun[i])
             
-        self._cnt = scores.shape[0] - (num_pos == 0).sum().item()
+        self._cnt = scores.shape[0]
         
 class NDCG(_Metric):
     '''
