@@ -130,7 +130,7 @@ class Jaccard(_Metric):
         row_id, col_id = torch.topk(scores, self.topk)
         col_id = col_id.cpu().numpy()
         is_hit = get_is_hit(scores, ground_truth, self.topk)
-        num_pos = is_hit.sum(dim=1)
+        num_pos = ground_truth.sum(dim=1)
         gold_bun = []
         for i in range(len(ground_truth)):
             gold_bun.append(np.where(ground_truth[i].cpu().numpy() == 1)[0])
