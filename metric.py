@@ -116,12 +116,9 @@ class Jaccard(_Metric):
             if len(list_bun2) == 0:
                 continue
             for j in list_bun2:
-                if i == j:
-                    cnt += 1
-                    continue
                 overlap = self.bi[i].intersection(self.bi[j])
                 tmp += len(overlap) / (len(self.bi[i]) + len(self.bi[j]) - len(overlap))
-            tmp /= (len(list_bun2) - cnt)
+            tmp /= len(list_bun2)
             ret += tmp
         ret /= len(list_bun1)
         return ret
@@ -133,21 +130,16 @@ class Jaccard(_Metric):
         # self._cnt += scores.shape[0] - (num_pos == 0).sum().item()
         # self._sum += (is_hit/(2 * self.topk-is_hit)).sum().item()
         row_id, col_id = torch.topk(scores, self.topk)
+        col_id = col_id.cpu().numpy()
         is_hit = get_is_hit(scores, ground_truth, self.topk)
         num_pos = is_hit.sum(dim=1)
-        row, col = np.where(is_hit.cpu().numpy() == 1)
-        # gold_bun = col_id[row, col]
         gold_bun = []
-        # for i in range(len(col_id)):
-        #     tmp = [col_id[i][j] for j in range(len(col_id[i])) if is_hit[i][j] == 1]
-        #     gold_bun.append(tmp)
         for i in range(len(ground_truth)):
             gold_bun.append(np.where(ground_truth[i].cpu().numpy() == 1)[0])
         
-        col_id = col_id.cpu().numpy()
-        
         for i in range(len(row_id)):
             self._sum += self.cal_overlap(col_id[i], gold_bun[i])
+            
         self._cnt = scores.shape[0] - (num_pos == 0).sum().item()
         
 class NDCG(_Metric):
