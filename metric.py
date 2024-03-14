@@ -145,16 +145,51 @@ class PHR(_Metric):
     def __init__(self, topk):
         super().__init__()
         self.topk = topk
+        self.bi = {}
+        self.load_bi()
+        
+    def load_bi(self):
+        path = CONFIG['path']
+        name = CONFIG['dataset_name']
+        with open(os.path.join(path, name, 'bundle_item.txt'), 'r') as f:
+            for line in f.readlines():
+                b, i = line.strip().split()
+                if int(b) not in self.bi:
+                    self.bi[int(b)] = set([int(i)])
+                else:
+                    self.bi[int(b)].add(int(i))
 
     def get_title(self):
         return "PHR@{}".format(self.topk)
+    
+    def cal_overlap(self, list_bun1, list_bun2):
+        ret = 0
+        for i in list_bun1:
+            tmp = 0
+            cnt = 0
+            for j in list_bun2:
+                overlap = self.bi[i].intersection(self.bi[j])
+                tmp += 1 if len(overlap) > 0 else 0
+            tmp /= len(list_bun2)
+            ret += tmp
+        ret /= len(list_bun1)
+        return ret
 
     def __call__(self, scores, ground_truth):
+        row_id, col_id = torch.topk(scores, self.topk)
+        col_id = col_id.cpu().numpy()
         is_hit = get_is_hit(scores, ground_truth, self.topk)
-        is_hit = is_hit.sum(dim=1)
         num_pos = ground_truth.sum(dim=1)
-        self._cnt += scores.shape[0] - (num_pos == 0).sum().item()
-        self._sum += (is_hit > 0).sum().item()
+        gold_bun = []
+        for i in range(len(ground_truth)):
+            gold_bun.append(np.where(ground_truth[i].cpu().numpy() == 1)[0])
+        
+        for i in range(len(row_id)):
+            if len(gold_bun[i]) == 0:
+                continue
+            self._sum += self.cal_overlap(col_id[i], gold_bun[i])
+            
+        self._cnt = (scores.shape[0] - (num_pos == 0).sum().item())
 
 class NDCG(_Metric):
     '''
