@@ -122,11 +122,6 @@ class Jaccard(_Metric):
         return ret
 
     def __call__(self, scores, ground_truth):
-        # is_hit = get_is_hit(scores, ground_truth, self.topk)
-        # is_hit = is_hit.sum(dim=1)
-        # num_pos = ground_truth.sum(dim=1)
-        # self._cnt += scores.shape[0] - (num_pos == 0).sum().item()
-        # self._sum += (is_hit/(2 * self.topk-is_hit)).sum().item()
         row_id, col_id = torch.topk(scores, self.topk)
         col_id = col_id.cpu().numpy()
         is_hit = get_is_hit(scores, ground_truth, self.topk)
@@ -142,6 +137,25 @@ class Jaccard(_Metric):
             
         self._cnt = (scores.shape[0] - (num_pos == 0).sum().item())
         
+class PHR(_Metric):
+    '''
+    Personalized Hit Ratio in top-k samples
+    '''
+
+    def __init__(self, topk):
+        super().__init__()
+        self.topk = topk
+
+    def get_title(self):
+        return "PHR@{}".format(self.topk)
+
+    def __call__(self, scores, ground_truth):
+        is_hit = get_is_hit(scores, ground_truth, self.topk)
+        is_hit = is_hit.sum(dim=1)
+        num_pos = ground_truth.sum(dim=1)
+        self._cnt += scores.shape[0] - (num_pos == 0).sum().item()
+        self._sum += (is_hit > 0).sum().item()
+
 class NDCG(_Metric):
     '''
     NDCG in top-k samples
