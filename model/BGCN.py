@@ -58,7 +58,7 @@ class BGCN(Model):
         self.epison = 1e-8
 
         assert isinstance(raw_graph, list)
-        ub_graph, ui_graph, bi_graph = raw_graph
+        ui_graph, bi_graph = raw_graph
 
         #  deal with weights
         bi_norm = sp.diags(1/(np.sqrt((bi_graph.multiply(bi_graph)).sum(axis=1).A.ravel()) + 1e-8)) @ bi_graph
@@ -77,13 +77,6 @@ class BGCN(Model):
         self.atom_graph = to_tensor(laplace_transform(atom_graph)).to(device)
         print('finish generating atom graph')
  
-        if ub_graph.shape == (self.num_users, self.num_bundles) \
-                and bb_graph.shape == (self.num_bundles, self.num_bundles):
-            # add self-loop
-            non_atom_graph = sp.bmat([[sp.identity(ub_graph.shape[0]), ub_graph],
-                                 [ub_graph.T, bb_graph]])
-        else:
-            raise ValueError(r"raw_graph's shape is wrong")
         self.non_atom_graph = to_tensor(laplace_transform(non_atom_graph)).to(device)
         print('finish generating non-atom graph')
 
@@ -113,6 +106,19 @@ class BGCN(Model):
                 pretrain['items_feature'])
             self.bundles_feature.data = F.normalize(
                 pretrain['bundles_feature'])
+        self.get_bundle_agg_graph_ori()
+            
+    def get_bundle_agg_graph_ori(self):
+        bi_graph = self.bi_graph
+        device = self.device
+
+        bundle_size = bi_graph.sum(axis=1) + 1e-8
+        bi_graph = sp.diags(1/bundle_size.A.ravel()) @ bi_graph
+        self.bundle_agg_graph_ori = to_tensor(bi_graph).to(device)
+            
+    def get_IL_bundle_rep(self, IL_items_feature):
+        IL_bundles_feature = torch.matmul(self.bundle_agg_graph_ori, IL_items_feature)
+        return IL_bundles_feature
 
     def one_propagate(self, graph, A_feature, B_feature, dnns):
         # node dropout on graph
@@ -137,32 +143,22 @@ class BGCN(Model):
 
     def propagate(self):
         #  =============================  item level propagation  =============================
-        atom_users_feature, atom_items_feature = self.one_propagate(
-            self.atom_graph, self.users_feature, self.items_feature, self.dnns_atom)
-        atom_bundles_feature = F.normalize(torch.matmul(self.pooling_graph, atom_items_feature))
+        # 
+        return self.users_feature, self.items_feature
 
-        #  ============================= bundle level propagation =============================
-        non_atom_users_feature, non_atom_bundles_feature = self.one_propagate(
-            self.non_atom_graph, self.users_feature, self.bundles_feature, self.dnns_non_atom)
-
-        users_feature = [atom_users_feature, non_atom_users_feature]
-        bundles_feature = [atom_bundles_feature, non_atom_bundles_feature]
-
-        return users_feature, bundles_feature
-
-    def predict(self, users_feature, bundles_feature):
-        users_feature_atom, users_feature_non_atom = users_feature # batch_n_f
-        bundles_feature_atom, bundles_feature_non_atom = bundles_feature # batch_n_f
-        pred = torch.sum(users_feature_atom * bundles_feature_atom, 2) \
-            + torch.sum(users_feature_non_atom * bundles_feature_non_atom, 2)
+    def predict(self, users_feature, items_feature):
+        u_feat = users_feature
+        i_feat = items_feature
+        b_feat = self.get_IL_bundle_rep(i_feat)
+        pred = torch.sum(u_feat * b_feat, 2)
         return pred
     
-    def forward(self, users, bundles):
-        users_feature, bundles_feature = self.propagate()
-        users_embedding = [i[users].expand(- 1, bundles.shape[1], -1) for i in users_feature]  # u_f --> batch_f --> batch_n_f
-        bundles_embedding = [i[bundles] for i in bundles_feature] # b_f --> batch_n_f
-        pred = self.predict(users_embedding, bundles_embedding)
-        loss = self.regularize(users_embedding, bundles_embedding)
+    def forward(self, users, items):
+        users_feature, item_feature = self.propagate()
+        users_embedding = users_feature[items]  # u_f --> batch_f --> batch_n_f
+        items_embedding = item_feature[items] # b_f --> batch_n_f
+        pred = self.predict(users_embedding, item_embedding)
+        loss = self.regularize(users_embedding, items_embedding)
         return pred, loss
 
     def regularize(self, users_feature, bundles_feature):

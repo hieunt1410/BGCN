@@ -40,10 +40,10 @@ def main():
 
     #  load data
     # remove tune data
-    bundle_train_data, bundle_test_data, item_data, assist_data = \
+    ui_train_data, bundle_test_data, item_data, assist_data = \
             dataset.get_dataset(CONFIG['path'], CONFIG['dataset_name'], task=CONFIG['task'])
 
-    train_loader = DataLoader(bundle_train_data, 1024, True,
+    train_loader = DataLoader(ui_train_data, 1024, True,
                               num_workers=4, pin_memory=True)
     test_loader = DataLoader(bundle_test_data, 1024, False,
                              num_workers=4, pin_memory=True)
@@ -54,7 +54,7 @@ def main():
         print('load pretrain')
 
     #  graph
-    ub_graph = bundle_train_data.ground_truth_u_b
+    # ub_graph = bundle_train_data.ground_truth_u_b
     ui_graph = item_data.ground_truth_u_i
     bi_graph = assist_data.ground_truth_b_i
 
@@ -85,7 +85,7 @@ def main():
 
         # model
         if CONFIG['model'] == 'BGCN':
-            graph = [ub_graph, ui_graph, bi_graph]
+            graph = [ui_graph, bi_graph]
             info = BGCN_Info(64, decay, message_dropout, node_dropout, 2)
             model = BGCN(info, assist_data, graph, device, pretrain=None).to(device)
 
