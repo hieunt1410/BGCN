@@ -59,6 +59,8 @@ class BGCN(Model):
 
         assert isinstance(raw_graph, list)
         ui_graph, bi_graph = raw_graph
+        self.ui_graph = ui_graph
+        self.bi_graph = bi_graph
 
         #  deal with weights
         bi_norm = sp.diags(1/(np.sqrt((bi_graph.multiply(bi_graph)).sum(axis=1).A.ravel()) + 1e-8)) @ bi_graph
@@ -68,17 +70,17 @@ class BGCN(Model):
         bundle_size = bi_graph.sum(axis=1) + 1e-8
         bi_graph = sp.diags(1/bundle_size.A.ravel()) @ bi_graph
 
-        if ui_graph.shape == (self.num_users, self.num_items):
-            # add self-loop
-            atom_graph = sp.bmat([[sp.identity(ui_graph.shape[0]), ui_graph],
-                                 [ui_graph.T, sp.identity(ui_graph.shape[1])]])
-        else:
-            raise ValueError(r"raw_graph's shape is wrong")
-        self.atom_graph = to_tensor(laplace_transform(atom_graph)).to(device)
-        print('finish generating atom graph')
+        # if ui_graph.shape == (self.num_users, self.num_items):
+        #     # add self-loop
+        #     atom_graph = sp.bmat([[sp.identity(ui_graph.shape[0]), ui_graph],
+        #                          [ui_graph.T, sp.identity(ui_graph.shape[1])]])
+        # else:
+        #     raise ValueError(r"raw_graph's shape is wrong")
+        # self.atom_graph = to_tensor(laplace_transform(atom_graph)).to(device)
+        # print('finish generating atom graph')
  
-        self.non_atom_graph = to_tensor(laplace_transform(non_atom_graph)).to(device)
-        print('finish generating non-atom graph')
+        # self.non_atom_graph = to_tensor(laplace_transform(non_atom_graph)).to(device)
+        # print('finish generating non-atom graph')
 
         self.pooling_graph = to_tensor(bi_graph).to(device)
         print('finish generating pooling graph')
@@ -113,11 +115,13 @@ class BGCN(Model):
         device = self.device
 
         bundle_size = bi_graph.sum(axis=1) + 1e-8
-        bi_graph = sp.diags(1/bundle_size.A.ravel()) @ bi_graph
+        bi_graph = sp.diags(1/bundle_size.A.ravel()) @ self.bi_graph
         self.bundle_agg_graph_ori = to_tensor(bi_graph).to(device)
+        print(bi_graph)
             
     def get_IL_bundle_rep(self, IL_items_feature):
-        IL_bundles_feature = torch.matmul(self.bundle_agg_graph_ori, IL_items_feature)
+        print(self.bundle_agg_graph_ori)
+        IL_bundles_feature = self.bundle_agg_graph_ori @ IL_items_feature
         return IL_bundles_feature
 
     def one_propagate(self, graph, A_feature, B_feature, dnns):
@@ -157,18 +161,16 @@ class BGCN(Model):
         users_feature, item_feature = self.propagate()
         users_embedding = users_feature[items]  # u_f --> batch_f --> batch_n_f
         items_embedding = item_feature[items] # b_f --> batch_n_f
-        pred = self.predict(users_embedding, item_embedding)
+        pred = self.predict(users_embedding, items_embedding)
         loss = self.regularize(users_embedding, items_embedding)
         return pred, loss
 
-    def regularize(self, users_feature, bundles_feature):
-        users_feature_atom, users_feature_non_atom = users_feature # batch_n_f
-        bundles_feature_atom, bundles_feature_non_atom = bundles_feature # batch_n_f
+    def regularize(self, users_feature, items_feature):
+        u_feat = users_feature # batch_n_f
+        i_feat = items_feature # batch_n_f
         loss = self.embed_L2_norm * \
-            ((users_feature_atom ** 2).sum() + (bundles_feature_atom ** 2).sum() +\
-            (users_feature_non_atom ** 2).sum() + (bundles_feature_non_atom ** 2).sum())
+            ((u_feat ** 2).sum() + (i_feat ** 2).sum())
         return loss
-
     def evaluate(self, propagate_result, users):
         '''
         just for testing, compute scores of all bundles for `users` by `propagate_result`
@@ -177,6 +179,6 @@ class BGCN(Model):
         u_feat = users_feature
         i_feat = items_feature
         b_feat = self.get_IL_bundle_rep(i_feat)
-        scores = torch.mm(users_feature_atom, b_feat.t()) 
+        scores = torch.mm(u_feat, b_feat.t()) 
         return scores
 

@@ -78,10 +78,10 @@ class UserItemTrainDataset(BasicDataset):
         self.U_I_pairs = self.load_U_I_interaction()
         indice = np.array(self.U_I_pairs, dtype=np.int32)
         values = np.ones(len(self.U_I_pairs), dtype=np.float32)
-        self.ground_truth_u_b = sp.coo_matrix(
+        self.ground_truth_u_i = sp.coo_matrix(
             (values, (indice[:, 0], indice[:, 1])), shape=(self.num_users, self.num_bundles)).tocsr()
 
-        print_statistics(self.ground_truth_u_b, 'U-B statistics in train')
+        print_statistics(self.ground_truth_u_i, 'U-I statistics in train')
 
         if CONFIG['sample'] == 'hard': 
             #  1. u_p --> b_n1
@@ -110,7 +110,76 @@ class UserItemTrainDataset(BasicDataset):
         return torch.LongTensor([user_b]), torch.LongTensor(all_items)
 
     def __len__(self):
-        return len(self.U_B_pairs)  
+        return len(self.U_I_pairs)  
+    
+class BundleTrainDataset(BasicDataset):
+    def __init__(self, path, name, item_data, assist_data, seed=None):
+        super().__init__(path, name, 'train', 1)
+        # U-B
+        self.U_B_pairs = self.load_U_B_interaction()
+        indice = np.array(self.U_B_pairs, dtype=np.int32)
+        values = np.ones(len(self.U_B_pairs), dtype=np.float32)
+        self.ground_truth_u_b = sp.coo_matrix(
+            (values, (indice[:, 0], indice[:, 1])), shape=(self.num_users, self.num_bundles)).tocsr()
+
+        print_statistics(self.ground_truth_u_b, 'U-B statistics in train')
+
+        if CONFIG['sample'] == 'hard': 
+            #  1. u_p --> b_n1
+            u_b_from_i = item_data.ground_truth_u_i @ assist_data.ground_truth_b_i.T
+            u_b_from_i = u_b_from_i.todense()
+            bn1_window = [int(i*self.num_bundles) for i in CONFIG['hard_window']]
+            self.u_b_for_neg_sample = np.argsort(u_b_from_i, axis=1)[:,bn1_window[0]:bn1_window[1]]
+
+            #  2. b_p --> b_n2
+            overlap_graph = assist_data.ground_truth_b_i @ assist_data.ground_truth_b_i.T
+            overlap_graph = overlap_graph.todense()
+            bn2_window = [int(i*self.num_bundles) for i in CONFIG['hard_window']]
+            self.b_b_for_neg_sample = np.argsort(overlap_graph, axis=1)[:,bn2_window[0]:bn2_window[1]]
+
+    def __getitem__(self, index):
+        user_b, pos_bundle = self.U_B_pairs[index]
+        all_bundles = [pos_bundle]
+        if CONFIG['sample'] == 'simple':
+            while True:
+                i = np.random.randint(self.num_bundles)
+                if self.ground_truth_u_b[user_b, i] == 0 and not i in all_bundles:
+                    all_bundles.append(i)
+                    if len(all_bundles) == self.neg_sample+1:
+                        break
+        elif CONFIG['sample'] == 'hard':
+            hard_probability = round(np.random.uniform(0, 1), 1)
+            if  hard_probability <= CONFIG['hard_prob'][0]:
+                while True:
+                    i = np.random.randint(self.u_b_for_neg_sample.shape[1])
+                    b_n1 = self.u_b_for_neg_sample[user_b, i]
+                    if self.ground_truth_u_b[user_b, b_n1] == 0 and not b_n1 in all_bundles:
+                        all_bundles.append(b_n1)
+                        if len(all_bundles) == self.neg_sample+1:
+                            break
+            elif CONFIG['hard_prob'][0] < hard_probability \
+                <= CONFIG['hard_prob'][0] + CONFIG['hard_prob'][1]:
+                while True:
+                    i = np.random.randint(self.b_b_for_neg_sample.shape[1])
+                    b_n2 = self.b_b_for_neg_sample[pos_bundle, i]
+                    if self.ground_truth_u_b[user_b, b_n2] == 0 and not b_n2 in all_bundles:
+                        all_bundles.append(b_n2)
+                        if len(all_bundles) == self.neg_sample+1:
+                            break
+            else:
+                while True:
+                    i = np.random.randint(self.num_bundles)
+                    if self.ground_truth_u_b[user_b, i] == 0 and not i in all_bundles:
+                        all_bundles.append(i)
+                        if len(all_bundles) == self.neg_sample+1:
+                            break
+        else:
+            raise ValueError(r"sample's method is wrong")
+
+        return torch.LongTensor([user_b]), torch.LongTensor(all_bundles)
+
+    def __len__(self):
+        return len(self.U_B_pairs) 
 
 
 class BundleTestDataset(BasicDataset):
@@ -186,8 +255,8 @@ def get_dataset(path, name, task='tune', seed=123):
 
     ui_train_data = UserItemTrainDataset(path, name, item_data, assist_data, seed=seed)
     print('finish loading bundle train data')
-    bundle_test_data = BundleTestDataset(path, name, bundle_train_data, task=task)
-    print('finish loading bundle test data')
+    # bundle_test_data = BundleTestDataset(path, name, bundle_train_data, task=task)
+    # print('finish loading bundle test data')
     
     bundle_train_data = BundleTrainDataset(path, name, item_data, assist_data, seed=seed)
     print('finish loading bundle train data')
