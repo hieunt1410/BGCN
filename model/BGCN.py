@@ -28,7 +28,7 @@ def to_tensor(graph):
     graph = graph.tocoo()
     values = graph.data
     indices = np.vstack((graph.row, graph.col))
-    graph = torch.sparse.FloatTensor(torch.LongTensor(indices), torch.FloatTensor(values), 
+    graph = torch.sparse_coo_tensor(torch.LongTensor(indices), torch.FloatTensor(values), 
                                           torch.Size(graph.shape))
     return graph
 
@@ -117,11 +117,10 @@ class BGCN(Model):
         bundle_size = bi_graph.sum(axis=1) + 1e-8
         bi_graph = sp.diags(1/bundle_size.A.ravel()) @ self.bi_graph
         self.bundle_agg_graph_ori = to_tensor(bi_graph).to(device)
-        print(bi_graph)
             
-    def get_IL_bundle_rep(self, IL_items_feature):
-        print(self.bundle_agg_graph_ori)
-        IL_bundles_feature = self.bundle_agg_graph_ori @ IL_items_feature
+    def get_IL_bundle_rep(self):
+        print(self.bundle_agg_graph_ori.shape, self.items_feature.shape)
+        IL_bundles_feature = self.bundle_agg_graph_ori @ self.items_feature
         return IL_bundles_feature
 
     def one_propagate(self, graph, A_feature, B_feature, dnns):
@@ -178,7 +177,7 @@ class BGCN(Model):
         users_feature, items_feature = propagate_result
         u_feat = users_feature
         i_feat = items_feature
-        b_feat = self.get_IL_bundle_rep(i_feat)
+        b_feat = self.get_IL_bundle_rep()
         scores = torch.mm(u_feat, b_feat.t()) 
         return scores
 
