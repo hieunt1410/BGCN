@@ -71,13 +71,13 @@ class BasicDataset(Dataset):
             return list(map(lambda s: tuple(int(i) for i in s[:-1].split('\t')), f.readlines()))
 
 
-class BundleTrainDataset(BasicDataset):
+class UserItemTrainDataset(BasicDataset):
     def __init__(self, path, name, item_data, assist_data, seed=None):
         super().__init__(path, name, 'train', 1)
         # U-B
         self.U_I_pairs = self.load_U_I_interaction()
-        indice = np.array(self.U_B_pairs, dtype=np.int32)
-        values = np.ones(len(self.U_B_pairs), dtype=np.float32)
+        indice = np.array(self.U_I_pairs, dtype=np.int32)
+        values = np.ones(len(self.U_I_pairs), dtype=np.float32)
         self.ground_truth_u_b = sp.coo_matrix(
             (values, (indice[:, 0], indice[:, 1])), shape=(self.num_users, self.num_bundles)).tocsr()
 
@@ -113,7 +113,7 @@ class BundleTrainDataset(BasicDataset):
         return len(self.U_B_pairs)  
 
 
-class UserItemTestDataset(BasicDataset):
+class BundleTestDataset(BasicDataset):
     def __init__(self, path, name, train_dataset, task='test'):
         super().__init__(path, name, task, None)
         # U-B

@@ -173,10 +173,10 @@ class BGCN(Model):
         '''
         just for testing, compute scores of all bundles for `users` by `propagate_result`
         '''
-        users_feature, bundles_feature = propagate_result
-        users_feature_atom, users_feature_non_atom = [i[users] for i in users_feature] # batch_f
-        bundles_feature_atom, bundles_feature_non_atom = bundles_feature # b_f
-        scores = torch.mm(users_feature_atom, bundles_feature_atom.t()) \
-            + torch.mm(users_feature_non_atom, bundles_feature_non_atom.t()) # batch_b
+        users_feature, items_feature = propagate_result
+        u_feat = users_feature
+        i_feat = items_feature
+        b_feat = self.get_IL_bundle_rep(i_feat)
+        scores = torch.mm(users_feature_atom, b_feat.t()) 
         return scores
 
