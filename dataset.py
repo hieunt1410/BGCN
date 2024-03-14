@@ -188,6 +188,11 @@ def get_dataset(path, name, task='tune', seed=123):
     print('finish loading bundle train data')
     bundle_test_data = BundleTestDataset(path, name, bundle_train_data, task=task)
     print('finish loading bundle test data')
+    
+    bundle_train_data = BundleTrainDataset(path, name, item_data, assist_data, seed=seed)
+    print('finish loading bundle train data')
+    bundle_test_data = BundleTestDataset(path, name, bundle_train_data, task=task)
+    print('finish loading bundle test data')
 
     return ui_train_data, bundle_test_data, item_data, assist_data
 
